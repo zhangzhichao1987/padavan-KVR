@@ -430,6 +430,13 @@ jobs:
         #echo "CONFIG_FIRMWARE_INCLUDE_SSOBFS=n" >> .config # simple-obfs混淆插件
         
         #########################################################################################
+        # 修复 mt7915 驱动上游 bug: cmm_wpa.c 中 if 分支的 MTWF_LOG 被注释,
+        # 导致 "expected expression before 'else'" 编译失败。此处恢复该日志语句。
+        CWPA="proprietary/rt_wifi/rtpci/7.3.0.1/mt7915/embedded/security/cmm_wpa.c"
+        if [ -f "$CWPA" ]; then
+          sed -i 's|//MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|' "$CWPA"
+          grep -q '^\s*MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg' "$CWPA" && echo "cmm_wpa.c patch OK" || echo "WARNING: cmm_wpa.c patch may not apply"
+        fi
         sudo ./clear_tree
         sudo ./build_firmware_modify $TNAME 0
         sudo mv -f images/*.trx /opt/images/
