@@ -437,6 +437,10 @@ jobs:
           sed -i 's|//MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|' "$CWPA"
           grep -q '^\s*MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg' "$CWPA" && echo "cmm_wpa.c patch OK" || echo "WARNING: cmm_wpa.c patch may not apply"
         fi
+        # 修复 user/rc/net.c 上游 bug: start_udpxy() 中 udpxy eval 块后有一个孤立
+        # 的 "#endif"(没有配对的 #if),导致 "#endif without #if" 编译失败。删除它。
+        sed -i '/udpxy_renew_period/,+2{/^[[:space:]]*#endif[[:space:]]*$/d}' user/rc/net.c
+        echo "net.c patch applied"
         sudo ./clear_tree
         sudo ./build_firmware_modify $TNAME 0
         sudo mv -f images/*.trx /opt/images/
