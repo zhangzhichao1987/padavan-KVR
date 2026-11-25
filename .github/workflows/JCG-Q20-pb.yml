@@ -441,6 +441,13 @@ jobs:
         # 的 "#endif"(没有配对的 #if),导致 "#endif without #if" 编译失败。删除它。
         sed -i '/udpxy_renew_period/,+2{/^[[:space:]]*#endif[[:space:]]*$/d}' user/rc/net.c
         echo "net.c patch applied"
+        # 修复 OpenSSH 编译: 仓库只带 openssh-10.6p2.tar.gz 未解压,
+        # 而 Makefile 的 extract_test 被注释,导致 cd openssh-10.6p2 失败。
+        if [ ! -d user/openssh/openssh-10.6p2 ]; then
+          tar xzf user/openssh/openssh-10.6p2.tar.gz -C user/openssh
+          patch -d user/openssh/openssh-10.6p2 -p1 -i ../openssh-orig.patch
+          echo "openssh source extracted and patched"
+        fi
         sudo ./clear_tree
         sudo ./build_firmware_modify $TNAME 0
         sudo mv -f images/*.trx /opt/images/
