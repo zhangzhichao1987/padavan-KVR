@@ -1,0 +1,489 @@
+
+name: JCG-Q20 OC1.1G + VNT + vless-xhttp
+
+on: 
+  workflow_dispatch:
+
+#设置仓库的读写权限
+permissions:
+  contents: write
+env:
+  TZ: Asia/Shanghai
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd fakeroot \
+        cpio git python3-docutils gettext automake autopoint texinfo build-essential help2man \
+        pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget
+        sudo timedatectl set-timezone Asia/Shanghai
+    - name: Install UPX
+      uses: crazy-max/ghaction-upx@v3
+      with:
+        version: v4.2.4
+        install-only: true
+    - name: Clone source code
+      env:
+        KERNEL: 3.4
+      run: |
+        git clone --depth=1 https://github.com/${GITHUB_REPOSITORY}.git /opt/rt-n56u
+        cd /opt/rt-n56u/toolchain-mipsel
+        sh dl_toolchain.sh
+        mkdir -p /opt/images/
+
+    - name: Build Firmware
+      env:
+        TNAME: JCG-Q20-pb
+        KERNEL: 3.4
+      run: |
+        cd /opt/rt-n56u/trunk
+        if [ ! -f configs/templates/$TNAME.config ] ; then
+        echo "configs/templates/$TNAME.config 没有找到 "
+        exit 1
+        fi
+        cp -f configs/templates/$TNAME.config .config
+        sed -i 's/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=n/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=y/g' .config
+        ################################################################################################
+        ###  清除默认配置###
+        sed -i '/CONFIG_FIRMWARE_ENABLE_IPV6/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_USB/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_UFSD/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_FAT/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_EXFAT/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_EXT2/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_EXT3/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_EXT4/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_XFS/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_FUSE/d' .config
+        sed -i '/CONFIG_FIRMWARE_ENABLE_SWAP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_UVC/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HID/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SERIAL/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_AUDIO/d' .config
+
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_XFRM/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_QOS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_IMQ/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_IFB/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_IPSET/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NFSD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NFSC/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_CIFS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NTFS_3G/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_LPRD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_U2EC/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TCPDUMP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HDPARM/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_PARTED/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SMBD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SMBD36/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_WINS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SMBD_SYSLOG/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FTPD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_RPL2TP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_EAP_PEAP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DDNS_SSL/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HTTPS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SFTP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DROPBEAR/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DROPBEAR_FAST_CODE/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSH/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENVPN/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SSWAN/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_XUPNPD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_MINIDLNA/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FIREFLY/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FFMPEG_NEW/d' .config
+
+        
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TRANSMISSION/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TRANSMISSION_WEB_CONTROL/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_ARIA/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_ARIA_WEB_CONTROL/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_CURL/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SCUTCLIENT/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_GDUT_DRCOM/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DOGCOM/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_MINIEAP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NJIT_CLIENT/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NAPT66/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SSSERVER/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_SERVER/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CLIENT/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CMD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DNSFORWARDER/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_VLMCSD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TTYD/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_LRZSZ/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_HTOP/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NANO/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_IPERF3/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_DUMP1090/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_RTL_SDR/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_MTR/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SOCAT/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SRELAY/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_MENTOHUST/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FRPC/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_FRPS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TUNSAFE/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_WIREGUARD/d' .config   
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_ZEROTIER/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_ALIDDNS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SHADOWSOCKS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_V2RAY/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_XRAY/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_TROJAN/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_SSOBFS/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_NPC/d' .config
+        sed -i '/CONFIG_FIRMWARE_WEBUI_HIDE_VPN/d' .config
+        sed -i '/CONFIG_FIRMWARE_INCLUDE_OPENVPN/d' .config
+        # 清除默认配置结束
+        ######################################################################
+        #以下选项是定义你需要的功能，（y=集成,n=忽略），重新写入到.config文件
+        ######################################################################
+        ##系统组件
+        #启用 IPv6 支持
+        echo "CONFIG_FIRMWARE_ENABLE_IPV6=y" >> .config
+        
+        #启用 USB 支持
+        echo "CONFIG_FIRMWARE_ENABLE_USB=y" >> .config
+        
+        #通过 Paragon 的 "ufsd" 驱动启用 NTFS 文件系统支持。约 0.4MB
+        echo "CONFIG_FIRMWARE_ENABLE_UFSD=y" >> .config
+        
+        #启用 FAT/FAT32 文件系统支持。约 0.1MB
+        echo "CONFIG_FIRMWARE_ENABLE_FAT=y" >> .config
+        
+        #启用 exFAT（同时支持 FAT/FAT32）文件系统支持。约 0.12MB
+        echo "CONFIG_FIRMWARE_ENABLE_EXFAT=y" >> .config
+        
+        #启用 EXT2 文件系统支持。约 0.1MB
+        echo "CONFIG_FIRMWARE_ENABLE_EXT2=y" >> .config
+        
+        #启用 EXT3 文件系统支持。约 0.2MB
+        echo "CONFIG_FIRMWARE_ENABLE_EXT3=y" >> .config
+        
+        #启用 EXT4（同时支持 EXT3/EXT2）文件系统支持。约 0.4MB
+        echo "CONFIG_FIRMWARE_ENABLE_EXT4=y" >> .config
+        
+        ##启用 XFS 文件系统支持。约 0.6MB
+        echo "CONFIG_FIRMWARE_ENABLE_XFS=n" >> .config 
+
+        ##启用 FUSE（用户空间文件系统）支持。约 0.1MB
+        echo "CONFIG_FIRMWARE_ENABLE_FUSE=y" >> .config
+
+        ##启用交换文件/分区支持。约 0.05MB
+        echo "CONFIG_FIRMWARE_ENABLE_SWAP=y" >> .config
+
+        ##包含 UVC 摄像头模块。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_UVC=n" >> .config
+
+        ##包含 USB-HID 模块。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_HID=y" >> .config
+
+        ##包含 USB-Serial 模块（例如 pl2303）。约 0.03MB
+        echo "CONFIG_FIRMWARE_INCLUDE_SERIAL=y" >> .config
+
+        ##包含 USB-Audio 模块。约 0.46MB
+        echo "CONFIG_FIRMWARE_INCLUDE_AUDIO=n" >> .config
+
+        ##包含 XFRM（IPsec）模块及 iptables 扩展。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_XFRM=y" >> .config
+
+        ##包含网络 QoS 调度模块。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_QOS=y" >> .config
+
+        ## 包含用于流量整形的 IMQ 模块（会略微降低性能）。约 0.02MB
+        echo "CONFIG_FIRMWARE_INCLUDE_IMQ=y" >> .config
+
+        ##包含用于流量整形的 IFB 模块。约 0.03MB
+        echo "CONFIG_FIRMWARE_INCLUDE_IFB=y" >> .config
+
+        ##包含 IPSet 工具和内核模块。约 0.4MB
+        #echo "CONFIG_FIRMWARE_INCLUDE_IPSET=y" >> .config
+
+        ##包含 NFSv3 服务器。约 0.6MB  已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_NFSD=n" >> .config
+
+        ## 包含 CIFS（SMB）客户端。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_CIFS=y" >> .config
+
+        ##包含 NTFS-3G FUSE 驱动（替代 Paragon 的 "ufsd" 驱动）。约 0.4MB
+        echo "CONFIG_FIRMWARE_INCLUDE_NTFS_3G=n" >> .config
+
+        ##包含 LPR 打印机守护程序。约 0.12MB
+        echo "CONFIG_FIRMWARE_INCLUDE_LPRD=y" >> .config
+
+        ##包含 USB-over-Ethernet 打印机守护程序。约 0.05MB
+        echo "CONFIG_FIRMWARE_INCLUDE_U2EC=y" >> .config
+
+        ##包含 "tcpdump" 工具。约 0.6MB
+        echo "CONFIG_FIRMWARE_INCLUDE_TCPDUMP=n" >> .config
+
+        ## 包含 "hdparm" 工具（允许设置硬盘节能超时时间和 APM）。约 0.1MB
+        echo "CONFIG_FIRMWARE_INCLUDE_HDPARM=y" >> .config
+
+        ##包含 "parted" 工具（允许创建 GPT 分区）。约 0.3MB
+        echo "CONFIG_FIRMWARE_INCLUDE_PARTED=y" >> .config
+
+        ##包含 SMB（和 WINS）服务器。约 1.5MB
+        echo "CONFIG_FIRMWARE_INCLUDE_SMBD=y" >> .config
+
+        ##使用 samba3.6 替代 samba3
+        echo "CONFIG_FIRMWARE_INCLUDE_SMBD36=y" >> .config
+
+        ##包含 SMB 和 WINS 服务器的日志功能。约 0.3MB
+        echo "CONFIG_FIRMWARE_INCLUDE_SMBD_SYSLOG=n" >> .config
+
+        ##包含 FTP 服务器。约 0.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_FTPD=y" >> .config
+
+        ##包含替代的 L2TP 控制客户端 RP-L2TP。约 0.1MB
+        echo "CONFIG_FIRMWARE_INCLUDE_RPL2TP=n" >> .config
+
+        ##包含 EAP-TTLS 和 EAP-PEAP 认证支持。openssl 约 1.2MB，wpa_supplicant 约 0.04MB
+        echo "CONFIG_FIRMWARE_INCLUDE_EAP_PEAP=y" >> .config
+
+        ##为 DDNS 客户端包含 HTTPS 支持。openssl 约 1.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_DDNS_SSL=y" >> .config
+
+        ##包含 HTTPS 支持。openssl 约 1.2MB
+        echo "CONFIG_FIRMWARE_INCLUDE_HTTPS=y" >> .config
+
+        ##包含 sftp 服务器。openssl 约 1.2MB，sftp-server 约 0.06MB
+        echo "CONFIG_FIRMWARE_INCLUDE_SFTP=y" >> .config
+
+        ##包含 dropbear SSH。约 0.3MB
+        echo "CONFIG_FIRMWARE_INCLUDE_DROPBEAR=y" >> .config
+
+        ## 加速 dropbear 的对称加密和哈希运算。约 0.06MB
+        echo "CONFIG_FIRMWARE_INCLUDE_DROPBEAR_FAST_CODE=y" >> .config
+
+        ##使用 OpenSSH 替代 dropbear。openssl 约 1.2MB，openssh 约 1.0MB
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSH=y" >> .config
+
+        ##包含 StrongSwan。XFRM 模块约 0.2MB，strongswan 约 0.7MB
+        echo "CONFIG_FIRMWARE_INCLUDE_SSWAN=n" >> .config
+
+        ##为 openssl 库添加椭圆曲线（EC）支持。约 0.1MB
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC=y" >> .config
+
+        ##包含 "openssl" 可执行程序，用于生成证书。约 0.4MB
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE=y" >> .config
+
+        ##包含 xUPNPd IPTV 媒体服务器。约 0.3MB
+        echo "CONFIG_FIRMWARE_INCLUDE_XUPNPD=y" >> .config
+
+        ##包含 Minidlna UPnP 媒体服务器。约 1.6MB
+        echo "CONFIG_FIRMWARE_INCLUDE_MINIDLNA=n" >> .config
+
+        ##包含 Firefly iTunes 媒体服务器。约 1.0MB
+        echo "CONFIG_FIRMWARE_INCLUDE_FIREFLY=n" >> .config
+
+        ##为 Minidlna 和 Firefly 包含 ffmpeg 0.11.x（替代 0.6.x）。约 0.1MB
+        echo "CONFIG_FIRMWARE_INCLUDE_FFMPEG_NEW=y" >> .config
+
+
+
+        ##包含 Transmission 种子下载工具。openssl 约 1.2MB，transmission 约 1.5MB 已删除 请查看/trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_TRANSMISSION=n" >> .config
+
+        ##包含 Transmission-Web-Control（高级 WebUI）。约 0.8MB 已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_TRANSMISSION_WEB_CONTROL=n" >> .config
+
+        ##包含 Aria2 下载管理器。openssl 约 1.2MB，aria2 约 3.5MB
+        echo "CONFIG_FIRMWARE_INCLUDE_ARIA=n" >> .config
+
+        ##包含 Aria2 WEB 控制界面。约 0.7MB。
+        echo "CONFIG_FIRMWARE_INCLUDE_ARIA_WEB_CONTROL=n" >> .config
+
+        
+
+        ##下载工具 curl 必备
+        echo "CONFIG_FIRMWARE_INCLUDE_CURL=y" >> .config
+
+        ##校园网 已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_SCUTCLIENT=n" >> .config
+        
+        ## OpenVPN。需要 IPv6 支持。openssl 约 1.2MB，openvpn 约 0.4MB
+        echo "CONFIG_FIRMWARE_INCLUDE_OPENVPN=y" >> .config
+
+        ## 广东工业校园认证
+        echo "CONFIG_FIRMWARE_INCLUDE_GDUT_DRCOM=n" >> .config
+
+         ## 哆点校园认证
+        echo "CONFIG_FIRMWARE_INCLUDE_DOGCOM=n" >> .config
+
+         ## 锐捷认证
+        echo "CONFIG_FIRMWARE_INCLUDE_MINIEAP=n" >> .config
+
+         ## 南京校园？
+        echo "CONFIG_FIRMWARE_INCLUDE_NJIT_CLIENT=n" >> .config
+
+         ## IPV6中继
+        echo "CONFIG_FIRMWARE_INCLUDE_NAPT66=y" >> .config
+
+         ## ss服务器
+        echo "CONFIG_FIRMWARE_INCLUDE_SSSERVER=n" >> .config
+
+         ## SOFTETHERVPN服务器
+        echo "CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_SERVER=n" >> .config
+
+         ## SOFTETHERVPN客户端
+        echo "CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CLIENT=n" >> .config
+ 
+         ## SOFTETHERVPN
+        echo "CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CMD=n" >> .config
+
+         ## DNS转发 已删除 请查看/trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_DNSFORWARDER=n" >> .config
+
+         ## KMS服务器 已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_VLMCSD=n" >> .config
+
+         ## TTYD
+        echo "CONFIG_FIRMWARE_INCLUDE_TTYD=y" >> .config
+
+         ## 文件传输工具
+        echo "CONFIG_FIRMWARE_INCLUDE_LRZSZ=y" >> .config
+
+         ## 系统状态监控工具
+        echo "CONFIG_FIRMWARE_INCLUDE_HTOP=y" >> .config
+
+         ## 文本编辑器
+        echo "CONFIG_FIRMWARE_INCLUDE_NANO=y" >> .config
+
+         ## iperf3测速软件
+        echo "CONFIG_FIRMWARE_INCLUDE_IPERF3=y" >> .config
+
+        ## DUMP1090
+        echo "CONFIG_FIRMWARE_INCLUDE_DUMP1090=y" >> .config
+
+        ## RTL_SDR
+        echo "CONFIG_FIRMWARE_INCLUDE_RTL_SDR=y" >> .config
+
+        ## MTR
+        echo "CONFIG_FIRMWARE_INCLUDE_MTR=y" >> .config
+
+        ## ipv6端口转发工具
+        echo "CONFIG_FIRMWARE_INCLUDE_SOCAT=y" >> .config
+
+        ## SRELAY代理
+        echo "CONFIG_FIRMWARE_INCLUDE_SRELAY=y" >> .config
+
+        ## MENTOHUST校园认证 已删除 请查看/trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_MENTOHUST=n" >> .config
+
+        ##################################
+        
+        echo "CONFIG_FIRMWARE_INCLUDE_FRPC=y" >> .config  ## FRPC 客户端 约8k
+        echo "CONFIG_FIRMWARE_INCLUDE_FRPS=y" >> .config  ## FRPS 服务端 约8k
+        echo "CONFIG_FIRMWARE_INCLUDE_WIREGUARD=y" >> .config  ## wireguard 约1M
+        echo "CONFIG_FIRMWARE_INCLUDE_TUNSAFE=n" >> .config ## tunsafe（wireguard的TCP方式）
+        echo "CONFIG_FIRMWARE_INCLUDE_ZEROTIER=y" >> .config ## zerotier 约 20k
+        echo "CONFIG_FIRMWARE_INCLUDE_ALIDDNS=y" >> .config #阿里DDNS ~20k
+        echo "CONFIG_FIRMWARE_INCLUDE_DDNSTO=n" >> .config #ddnsto 约800k  已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_TAILSCALE=y" >> .config #tailscale 约20k
+        echo "CONFIG_FIRMWARE_INCLUDE_NATPIERCE=y" >> .config #皎月连 约20k
+        echo "CONFIG_FIRMWARE_INCLUDE_VNTCLI=y" >> .config #vnt客户端 约80k
+        echo "CONFIG_FIRMWARE_INCLUDE_VNTS=y" >> .config #vnt服务端 约50k
+        echo "CONFIG_FIRMWARE_INCLUDE_CLOUDFLARED=y" >> .config #CF的隧道 约50k
+        echo "CONFIG_FIRMWARE_INCLUDE_LUCKY=y" >> .config #LUCKY 约50k
+        echo "CONFIG_FIRMWARE_INCLUDE_CLOUDFLARE=y" >> .config #CF-ddns 约50k
+        echo "CONFIG_FIRMWARE_INCLUDE_EASYTIER=y" >> .config #EasyTier 约50k
+        
+        echo "CONFIG_FIRMWARE_INCLUDE_ALIST=y" >> .config #ALIST文件列表 约80k
+        echo "CONFIG_FIRMWARE_INCLUDE_WXSEND=y" >> .config #微信推送 约50k
+        echo "CONFIG_FIRMWARE_INCLUDE_UUPLUGIN=y" >> .config #网易UU加速器 约50k
+        
+        echo "CONFIG_FIRMWARE_INCLUDE_ALDRIVER=n" >> .config #阿里云盘 约50k
+        sed -i 's/EVM_RESTART_ALDRIVER/EVM_RESTART_VIRTUALHERE/g' ./user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_VIRTUALHERE=y" >> .config #virtualhere 约30k 后期需要自行下载可执行文件 在trunk/user/virtualhere 
+        
+        echo "CONFIG_FIRMWARE_INCLUDE_WYY=n" >> .config #网易云解锁 约80k 已删除 /trunk/user/httpd/common.h
+        echo "CONFIG_FIRMWARE_INCLUDE_BAFA=y" >> .config #巴法云 约90k
+        echo "CONFIG_FIRMWARE_INCLUDE_CADDY=y" >> .config #在线文件管理服务不占空间(4.0kb左右)
+        echo "CONFIG_FIRMWARE_INCLUDE_SMARTDNS=y" >> .config #smartdns
+        echo "CONFIG_FIRMWARE_INCLUDE_ADGUARDHOME=y" >> .config #adguardhome不占空间(7.2kb左右)
+        echo "CONFIG_FIRMWARE_INCLUDE_NETCAT=n" >> .config #nc工具
+        echo "CONFIG_FIRMWARE_INCLUDE_MSD_LITE=y" >> .config #MSD_LITE工具
+        
+        
+        #echo "CONFIG_FIRMWARE_INCLUDE_V2RAYA=n" >> .config #v2raya 已删除 /trunk/user/httpd/common.h
+        #echo "CONFIG_FIRMWARE_INCLUDE_NVPPROXY=n" >> .config #NVPPROXY 已删除 /trunk/user/httpd/common.h
+        ##科学上网## 已删除 请查看/trunk/user/httpd/common.h
+        #echo "CONFIG_FIRMWARE_INCLUDE_SHADOWSOCKS=n" >> .config #SS plus+ 科学上网插件
+        #echo "CONFIG_FIRMWARE_INCLUDE_V2RAY=n" >> .config #无需集成会在线下载
+        #echo "CONFIG_FIRMWARE_INCLUDE_XRAY=n" >> .config #无需集成会在线下载
+        #echo "CONFIG_FIRMWARE_INCLUDE_TROJAN=n" >> .config #无需集成会在线下载
+        #echo "CONFIG_FIRMWARE_INCLUDE_SSOBFS=n" >> .config # simple-obfs混淆插件
+        
+        #########################################################################################
+        # 修复 mt7915 驱动上游 bug: cmm_wpa.c 中 if 分支的 MTWF_LOG 被注释,
+        # 导致 "expected expression before 'else'" 编译失败。此处恢复该日志语句。
+        CWPA="proprietary/rt_wifi/rtpci/7.3.0.1/mt7915/embedded/security/cmm_wpa.c"
+        if [ -f "$CWPA" ]; then
+          sed -i 's|//MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg|' "$CWPA"
+          grep -q '^\s*MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_INFO, ("MIC Different in pairwise msg' "$CWPA" && echo "cmm_wpa.c patch OK" || echo "WARNING: cmm_wpa.c patch may not apply"
+        fi
+        # 修复 user/rc/net.c 上游 bug: start_udpxy() 中 udpxy eval 块后有一个孤立
+        # 的 "#endif"(没有配对的 #if),导致 "#endif without #if" 编译失败。删除它。
+        sed -i '/udpxy_renew_period/,+2{/^[[:space:]]*#endif[[:space:]]*$/d}' user/rc/net.c
+        echo "net.c patch applied"
+        # 修复 OpenSSH 编译: 仓库只带 openssh-10.6p2.tar.gz 未解压,
+        # 而 Makefile 的 extract_test 被注释,导致 cd openssh-10.6p2 失败。
+        if [ ! -d user/openssh/openssh-10.6p2 ]; then
+          tar xzf user/openssh/openssh-10.6p2.tar.gz -C user/openssh
+          patch -d user/openssh/openssh-10.6p2 -p1 -i ../openssh-orig.patch
+          echo "openssh source extracted and patched"
+        fi
+        ################ JCG-Q20 OC 1.1GHz + 内置订阅 + 精简插件 ################
+        echo "CONFIG_FIRMWARE_CPU_900MHZ=y" >> .config
+        sed -i 's/(reg & 0x7ff) != 0xc2/(reg \& 0x7ff) != 0x362/' linux-3.4.x/arch/mips/rt2880/init.c
+        sed -i 's/reg |= (0xc2)/reg |= (0x362)/' linux-3.4.x/arch/mips/rt2880/init.c
+        grep -q '0x362' linux-3.4.x/arch/mips/rt2880/init.c || { echo "OC patch failed"; exit 1; }
+        for k in $(grep -o 'CONFIG_FIRMWARE_INCLUDE_[A-Z0-9_]*=y' .config | cut -d= -f1); do
+          case "$k" in
+            CONFIG_FIRMWARE_INCLUDE_VNTCLI|CONFIG_FIRMWARE_INCLUDE_VNTS|CONFIG_FIRMWARE_INCLUDE_DROPBEAR) ;;
+            *) sed -i "s/^${k}=y$/${k}=n/" .config ;;
+          esac
+        done
+        echo 'aW1wb3J0IHJlCnA9J3VzZXIvc2NyaXB0cy9tdGRfc3RvcmFnZS5zaCcKcz1vcGVuKHAsZW5jb2Rpbmc9J3V0Zi04JykucmVhZCgpCmluamVjdD0nIyA+Pj4gUTIwIGJha2VkIFhyYXkgc3Vic2NyaXB0aW9uICh2bGVzcy14aHR0cClcbm1rZGlyIC1wICIkZGlyX3N0b3JhZ2UiXG5lY2hvIFwnZXcwS0lDQWliRzluSWpvZ2V3MEtJQ0FnSUNKc2IyZHNaWFpsYkNJNklDSjNZWEp1YVc1bklnMEtJQ0I5TEEwS0lDQWlhVzVpYjNWdVpITWlPaUJiRFFvZ0lDQWdldzBLSUNBZ0lDQWdJblJoWnlJNklDSnpiMk5yY3kxcGJpSXNEUW9nSUNBZ0lDQWljRzl5ZENJNklERXdPREFzRFFvZ0lDQWdJQ0FpYkdsemRHVnVJam9nSWpBdU1DNHdMakFpTEEwS0lDQWdJQ0FnSW5CeWIzUnZZMjlzSWpvZ0luTnZZMnR6SWl3TkNpQWdJQ0FnSUNKelpYUjBhVzVuY3lJNklIc05DaUFnSUNBZ0lDQWdJbUYxZEdnaU9pQWlibTloZFhSb0lpd05DaUFnSUNBZ0lDQWdJblZrY0NJNklIUnlkV1VzRFFvZ0lDQWdJQ0FnSUNKcGNDSTZJQ0l3TGpBdU1DNHdJZzBLSUNBZ0lDQWdmUTBLSUNBZ0lIMHNEUW9nSUNBZ2V3MEtJQ0FnSUNBZ0luUmhaeUk2SUNKb2RIUndMV2x1SWl3TkNpQWdJQ0FnSUNKd2IzSjBJam9nTVRBNE1Td05DaUFnSUNBZ0lDSnNhWE4wWlc0aU9pQWlNQzR3TGpBdU1DSXNEUW9nSUNBZ0lDQWljSEp2ZEc5amIyd2lPaUFpYUhSMGNDSXNEUW9nSUNBZ0lDQWljMlYwZEdsdVozTWlPaUI3ZlEwS0lDQWdJSDBOQ2lBZ1hTd05DaUFnSW05MWRHSnZkVzVrY3lJNklGc05DaUFnSUNCN0RRb2dJQ0FnSUNBaWRHRm5Jam9nSWs1UUxWaElWRlJRTFRZeU56ZzRJaXdOQ2lBZ0lDQWdJQ0p3Y205MGIyTnZiQ0k2SUNKMmJHVnpjeUlzRFFvZ0lDQWdJQ0FpYzJWMGRHbHVaM01pT2lCN0RRb2dJQ0FnSUNBZ0lDSjJibVY0ZENJNklGc05DaUFnSUNBZ0lDQWdJQ0I3RFFvZ0lDQWdJQ0FnSUNBZ0lDQWlZV1JrY21WemN5STZJQ0l5TURZdU1UZzNMakl3T0M0eU1ETWlMQTBLSUNBZ0lDQWdJQ0FnSUNBZ0luQnZjblFpT2lBMk1qYzRPQ3dOQ2lBZ0lDQWdJQ0FnSUNBZ0lDSjFjMlZ5Y3lJNklGc05DaUFnSUNBZ0lDQWdJQ0FnSUNBZ2V3MEtJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDSnBaQ0k2SUNJMU5HRXlOV1ptWlMwM016QXpMVFF4WkdRdE9XWmlaUzAyTkRnMk5EbGhaVFJpWkRNaUxBMEtJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDSm1iRzkzSWpvZ0lpSXNEUW9nSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJbVZ1WTNKNWNIUnBiMjRpT2lBaWJtOXVaU0lzRFFvZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSW14bGRtVnNJam9nTUEwS0lDQWdJQ0FnSUNBZ0lDQWdJQ0I5RFFvZ0lDQWdJQ0FnSUNBZ0lDQmREUW9nSUNBZ0lDQWdJQ0FnZlEwS0lDQWdJQ0FnSUNCZERRb2dJQ0FnSUNCOUxBMEtJQ0FnSUNBZ0luTjBjbVZoYlZObGRIUnBibWR6SWpvZ2V3MEtJQ0FnSUNBZ0lDQWlibVYwZDI5eWF5STZJQ0o0YUhSMGNDSXNEUW9nSUNBZ0lDQWdJQ0p6WldOMWNtbDBlU0k2SUNKeVpXRnNhWFI1SWl3TkNpQWdJQ0FnSUNBZ0luSmxZV3hwZEhsVFpYUjBhVzVuY3lJNklIc05DaUFnSUNBZ0lDQWdJQ0FpYzJWeWRtVnlUbUZ0WlNJNklDSjNkM2N1YTJGcGMzUXVZV011YTNJaUxBMEtJQ0FnSUNBZ0lDQWdJQ0ptYVc1blpYSndjbWx1ZENJNklDSnpZV1poY21raUxBMEtJQ0FnSUNBZ0lDQWdJQ0p3ZFdKc2FXTkxaWGtpT2lBaVRVWTFRekpsV2w4NWFFcE9ORXhaUTBGd1FrdGpSVTEyWkhWSE5tcFFXak5OVGt4SlpuQklNRkJuU1NJc0RRb2dJQ0FnSUNBZ0lDQWdJbk5vYjNKMFNXUWlPaUFpTkRNM05HTXdNakFpRFFvZ0lDQWdJQ0FnSUgwc0RRb2dJQ0FnSUNBZ0lDSnpiMk5yYjNCMElqb2dldzBLSUNBZ0lDQWdJQ0FnSUNKdFlYSnJJam9nTWpVMUxBMEtJQ0FnSUNBZ0lDQWdJQ0owWTNCTmNIUmpjQ0k2SUdaaGJITmxMQTBLSUNBZ0lDQWdJQ0FnSUNKMFkzQk9iMFJsYkdGNUlqb2dkSEoxWlN3TkNpQWdJQ0FnSUNBZ0lDQWlaRzl0WVdsdVUzUnlZWFJsWjNraU9pQWlWWE5sU1ZBaURRb2dJQ0FnSUNBZ0lIMHNEUW9nSUNBZ0lDQWdJQ0o0YUhSMGNGTmxkSFJwYm1keklqb2dldzBLSUNBZ0lDQWdJQ0FnSUNKd1lYUm9Jam9nSWk5NmMyRnphVFZ1YUhOaUlpd05DaUFnSUNBZ0lDQWdJQ0FpYUc5emRDSTZJQ0ozZDNjdWEyRnBjM1F1WVdNdWEzSWlMQTBLSUNBZ0lDQWdJQ0FnSUNKdGIyUmxJam9nSW1GMWRHOGlEUW9nSUNBZ0lDQWdJSDBOQ2lBZ0lDQWdJSDBzRFFvZ0lDQWdJQ0FpYlhWNElqb2dldzBLSUNBZ0lDQWdJQ0FpWlc1aFlteGxaQ0k2SUdaaGJITmxEUW9nSUNBZ0lDQjlEUW9nSUNBZ2ZTd05DaUFnSUNCN0RRb2dJQ0FnSUNBaWRHRm5Jam9nSW1ScGNtVmpkQ0lzRFFvZ0lDQWdJQ0FpY0hKdmRHOWpiMndpT2lBaVpuSmxaV1J2YlNJc0RRb2dJQ0FnSUNBaWMyVjBkR2x1WjNNaU9pQjdmUTBLSUNBZ0lIMHNEUW9nSUNBZ2V3MEtJQ0FnSUNBZ0luUmhaeUk2SUNKaWJHOWpheUlzRFFvZ0lDQWdJQ0FpY0hKdmRHOWpiMndpT2lBaVlteGhZMnRvYjJ4bElpd05DaUFnSUNBZ0lDSnpaWFIwYVc1bmN5STZJSHNOQ2lBZ0lDQWdJQ0FnSW5KbGMzQnZibk5sSWpvZ2V3MEtJQ0FnSUNBZ0lDQWdJQ0owZVhCbElqb2dJbWgwZEhBaURRb2dJQ0FnSUNBZ0lIME5DaUFnSUNBZ0lIME5DaUFnSUNCOURRb2dJRjBzRFFvZ0lDSnliM1YwYVc1bklqb2dldzBLSUNBZ0lDSmtiMjFoYVc1VGRISmhkR1ZuZVNJNklDSkJjMGx6SWl3TkNpQWdJQ0FpY25Wc1pYTWlPaUJiRFFvZ0lDQWdJQ0I3RFFvZ0lDQWdJQ0FnSUNKMGVYQmxJam9nSW1acFpXeGtJaXdOQ2lBZ0lDQWdJQ0FnSW1SdmJXRnBiaUk2SUZzTkNpQWdJQ0FnSUNBZ0lDQWlaMlZ2YzJsMFpUcHdjbWwyWVhSbElpd05DaUFnSUNBZ0lDQWdJQ0FpWjJWdmMybDBaVHBqYmlJTkNpQWdJQ0FnSUNBZ1hTd05DaUFnSUNBZ0lDQWdJbTkxZEdKdmRXNWtWR0ZuSWpvZ0ltUnBjbVZqZENJTkNpQWdJQ0FnSUgwc0RRb2dJQ0FnSUNCN0RRb2dJQ0FnSUNBZ0lDSjBlWEJsSWpvZ0ltWnBaV3hrSWl3TkNpQWdJQ0FnSUNBZ0ltbHdJam9nV3cwS0lDQWdJQ0FnSUNBZ0lDSm5aVzlwY0Rwd2NtbDJZWFJsSWcwS0lDQWdJQ0FnSUNCZExBMEtJQ0FnSUNBZ0lDQWliM1YwWW05MWJtUlVZV2NpT2lBaVpHbHlaV04wSWcwS0lDQWdJQ0FnZlEwS0lDQWdJRjBOQ2lBZ2ZTd05DaUFnSW1SdWN5STZJSHNOQ2lBZ0lDQWljMlZ5ZG1WeWN5STZJRnNOQ2lBZ0lDQWdJQ0pvZEhSd2N6b3ZMMlJ2YUM1d2RXSXZaRzV6TFhGMVpYSjVJaXdOQ2lBZ0lDQWdJQ0pvZEhSd2N6b3ZMMlJ1Y3k1aGJHbGtibk11WTI5dEwyUnVjeTF4ZFdWeWVTSXNEUW9nSUNBZ0lDQWlPQzQ0TGpndU9DSU5DaUFnSUNCZExBMEtJQ0FnSUNKMFlXY2lPaUFpWkc1ekxXbHVJZzBLSUNCOURRcDlcJyB8IGJhc2U2NCAtZCA+ICIkZGlyX3N0b3JhZ2UveHJheV9jb25maWcuanNvbiJcbmVjaG8gXCdJeUV2WW1sdUwzTm9EUW9qSUZFeU1DRGxob1hudmE0Z1dISmhlU0Rsa0svbGlxam9oSnJtbkt6dnZJaDJiR1Z6Y3kxNGFIUjBjQ0RvcnFMcG1JWHZ2SXpwbW8vbG03cmt1N2JsbTdybGpKYnZ2SWtOQ2tKQlUwVTlJbWgwZEhBNkx5OHlNRFl1TVRnM0xqSXdPQzR5TURNNk16TTFNall2TTFsbGVITnRPRWRqU0dSalVrRlhkelJNUjFZaURRcEVTVkk5SWk5MGJYQXZlSEpoZVNJTkNreFBSejBpSkVSSlVpOXBibk4wWVd4c0xteHZaeUlOQ20xclpHbHlJQzF3SUNJa1JFbFNJanNnWTJRZ0lpUkVTVklpSUh4OElHVjRhWFFnTVEwS09pQStJQ0lrVEU5SElnMEtiVzkxYm5RZ0xXOGdjbVZ0YjNWdWRDeHphWHBsUFRrMlRTQjBiWEJtY3lBdmRHMXdJREkrTDJSbGRpOXVkV3hzRFFwc2IyY29LWHNnWldOb2J5QWlXeVFvWkdGMFpTQW5LeVZHSUNWVUp5bGRJQ1FxSWlBK1BpQWlKRXhQUnlJN0lHVmphRzhnSWlRcUlqc2dmUTBLZDJGcGRGOXVaWFFvS1hzZ2FUMHdPeUIzYUdsc1pTQmJJQ1JwSUMxc2RDQTBOU0JkT3lCa2J5QnBQU1FvS0drck1Ta3BPeUIzWjJWMElDMXhJQzFVSURZZ0xVOGdMM1J0Y0M4dWVHNWxkQ0FpSkVKQlUwVXZlSEpoZVMxamIyNW1hV2N1ZVdGdGJDSWdNajR2WkdWMkwyNTFiR3dnSmlZZ1d5QXRjeUF2ZEcxd0x5NTRibVYwSUYwZ0ppWWdleUJ5YlNBdFppQXZkRzF3THk1NGJtVjBPeUJ5WlhSMWNtNGdNRHNnZlRzZ2NtMGdMV1lnTDNSdGNDOHVlRzVsZERzZ2MyeGxaWEFnTWpzZ1pHOXVaVHNnY21WMGRYSnVJREU3SUgwTkNtWmxkR05vS0NsN0lIVTlJaVF4SWpzZ2J6MGlKRElpT3lCd1BTSWtieTV3WVhKMElqc2dhVDB3T3lCM2FHbHNaU0JiSUNScElDMXNkQ0F6TUNCZE95QmtieUJwUFNRb0tHa3JNU2twT3lCeWJTQXRaaUFpSkhBaU95QjNaMlYwSUMxeElDMVVJRFl3SUMxUElDSWtjQ0lnSWlSMUlpQXlQaTlrWlhZdmJuVnNiQ0FtSmlCYklDMXpJQ0lrY0NJZ1hTQjhmQ0I3SUhOc1pXVndJREk3SUdOdmJuUnBiblZsT3lCOU95QnplajBrS0hOMFlYUWdMV01sY3lBaUpIQWlJREkrTDJSbGRpOXVkV3hzSUh4OElHVmphRzhnTUNrN0lGc2dJaVJ2SWlBOUlIaHlZWGtnWFNBbUppQmJJQ0lrYzNvaUlDMXNkQ0F6TURBd01EQXdNQ0JkSUNZbUlIc2djMnhsWlhBZ01qc2dZMjl1ZEdsdWRXVTdJSDA3SUcxMklDMW1JQ0lrY0NJZ0lpUnZJaUFtSmlCN0lHeHZaeUFpWkc5M2JteHZZV1JsWkNBa2J5QW9KSE42S1NJN0lISmxkSFZ5YmlBd095QjlPeUJ6YkdWbGNDQXlPeUJrYjI1bE95QnlaWFIxY200Z01Uc2dmUTBLYkc5bklDSnpkR0Z5ZENJTkNuZGhhWFJmYm1WMElIeDhJSHNnYkc5bklDSnVaWFIzYjNKcklHWmhhV3dpT3lCbGVHbDBJREU3SUgwTkNuQnBaSE05SkNod2N5QXlQaTlrWlhZdmJuVnNiQ0I4SUdkeVpYQWdJbHQ0WFhKaGVTQnlkVzRpSUh3Z1lYZHJJQ2Q3Y0hKcGJuUWdKREY5SnlrN0lGc2dMVzRnSWlSd2FXUnpJaUJkSUNZbUlHdHBiR3dnSkhCcFpITWdNajR2WkdWMkwyNTFiR3dOQ25Oc1pXVndJREVOQ21abGRHTm9JQ0lrUWtGVFJTOTRjbUY1TFcxcGNITmxiQzU1WVcxc0lpQjRjbUY1SUh4OElHVjRhWFFnTVEwS1kyaHRiMlFnSzNnZ2VISmhlUTBLV3lBdGN5Qm5aVzlwY0M1a1lYUWdYU0I4ZkNCbVpYUmphQ0FpSkVKQlUwVXZaMlZ2YVhBdVpHRjBMbmxoYld3aUlHZGxiMmx3TG1SaGRDQjhmQ0JsZUdsMElERU5DbHNnTFhNZ1oyVnZjMmwwWlM1a1lYUWdYU0I4ZkNCbVpYUmphQ0FpSkVKQlUwVXZaMlZ2YzJsMFpTNWtZWFF1ZVdGdGJDSWdaMlZ2YzJsMFpTNWtZWFFnZkh3Z1pYaHBkQ0F4RFFwamNDQXRaaUF2WlhSakwzTjBiM0poWjJVdmVISmhlVjlqYjI1bWFXY3Vhbk52YmlCamIyNW1hV2N1YW5OdmJnMEtMaTk0Y21GNUlISjFiaUF0ZEdWemRDQXRZMjl1Wm1sbklHTnZibVpwWnk1cWMyOXVJRDRnSWlSRVNWSXZZMjl1Wm1sbkxYUmxjM1F1Ykc5bklpQXlQaVl4SUh4OElIc2diRzluSUNKamIyNW1hV2NnZEdWemRDQm1ZV2xzSWpzZ1kyRjBJQ0lrUkVsU0wyTnZibVpwWnkxMFpYTjBMbXh2WnlJZ1BqNGdJaVJNVDBjaU95QmxlR2wwSURFN0lIME5DbTV2YUhWd0lDNHZlSEpoZVNCeWRXNGdMV052Ym1acFp5QmpiMjVtYVdjdWFuTnZiaUErSUNJa1JFbFNMM2h5WVhrdWJHOW5JaUF5UGlZeElDWU5DbWs5TURzZ2QyaHBiR1VnV3lBa2FTQXRiSFFnTVRVZ1hUc2daRzhnYVQwa0tDaHBLekVwS1RzZ2NITWdNajR2WkdWMkwyNTFiR3dnZkNCbmNtVndJQzF4SUNKYmVGMXlZWGtnY25WdUlpQW1KaUJ1WlhSemRHRjBJQzFzZEc0Z01qNHZaR1YyTDI1MWJHd2dmQ0JuY21Wd0lDMXhJQ2M2TVRBNE1DY2dKaVlnZXlCbFkyaHZJQ0piSkNoa1lYUmxJQ2NySlVZZ0pWUW5LVjBnVDBzZ2NHOXlkREV3T0RBOVRFbFRWRVZPSWlBK0lDSWtSRWxTTDNOMFlYUjFjeTVzYjJjaU95QnNiMmNnSW5OMFlYSjBaV1FpT3lCbGVHbDBJREE3SUgwN0lITnNaV1Z3SURFN0lHUnZibVVOQ214dlp5QWljM1JoY25RZ1ptRnBiQ0k3SUdWNGFYUWdNUTBLXCcgfCBiYXNlNjQgLWQgPiAiJGRpcl9zdG9yYWdlL3hyYXlfc3RhcnQuc2giXG5jaG1vZCA3NTUgIiRkaXJfc3RvcmFnZS94cmF5X3N0YXJ0LnNoIlxuZ3JlcCAtcSBcJ3hyYXlfc3RhcnQuc2ggc3RhcnRcJyAiJHNjcmlwdF9zdGFydGVkIiAyPi9kZXYvbnVsbCB8fCBlY2hvIFwnL2V0Yy9zdG9yYWdlL3hyYXlfc3RhcnQuc2ggc3RhcnQgPi9kZXYvbnVsbCAyPiYxICZcJyA+PiAiJHNjcmlwdF9zdGFydGVkIlxuIyA8PDwnCm09cmUuc2VhcmNoKHInXltcdCBdKmNobW9kIDc1NSAiXCRzY3JpcHRfc3RhcnRlZCInLHMscmUuTSkKYXNzZXJ0IG0sJ21hcmtlciBub3QgZm91bmQnCnM9c1s6bS5zdGFydCgpXStpbmplY3QrJ1xuJytzW20uc3RhcnQoKTpdCm9wZW4ocCwndycsZW5jb2Rpbmc9J3V0Zi04Jykud3JpdGUocykKcHJpbnQoJ210ZF9zdG9yYWdlIGluamVjdGVkJykK' | base64 -d > /tmp/q20_inject.py
+        python3 /tmp/q20_inject.py
+        grep -q 'xray_config.json' user/scripts/mtd_storage.sh || { echo "subscription inject failed"; exit 1; }
+        #######################################################################
+        sudo ./clear_tree
+        sudo ./build_firmware_modify $TNAME 0
+        sudo mv -f images/*.trx /opt/images/
+        cp -f .config /opt/images/${TNAME}.config
+        echo "build_time=$(date '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
+        echo "tag=$(date '+%Y-%m-%d')" >> $GITHUB_ENV
+    - name : Upload packages
+      uses: actions/upload-artifact@master
+      if: always()
+      with:
+        name: JCG-Q20-OC-VNT
+        path: /opt/images
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.tag }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github) 
+
+           `型号.config` 是集成的插件模板
+           
+        tag_name: ${{ env.tag }}
+        files: /opt/images/*
